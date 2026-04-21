@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>21-Day Override</title>
+    <style>
+        :root {
+            --bg-dark: #0a0a0a;
+            --glass-bg: rgba(25, 25, 25, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --accent-neon: #FFD700; /* Yellow Accent */
+            --text-main: #f0f0f0;
+            --text-muted: #888;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
+        
+        body { background-color: var(--bg-dark); color: var(--text-main); overflow-x: hidden; padding-bottom: 90px; }
+        
+        .glass-header, .glass-card, .glass-bottom-nav { 
+            background: var(--glass-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--glass-border); 
+        }
+        
+        .glass-header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; position: sticky; top: 0; z-index: 10; }
+        
+        main { padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+        .glass-card { padding: 20px; border-radius: 16px; box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5); }
+        
+        input, textarea, select { width: 100%; background: rgba(0, 0, 0, 0.5); border: 1px solid var(--glass-border); color: var(--text-main); padding: 12px; border-radius: 8px; margin-top: 10px; outline: none; }
+        input[type="time"] { width: auto; color-scheme: dark; } 
+        input:focus, textarea:focus { border-color: var(--accent-neon); }
+        
+        .neon-btn { background: transparent; color: var(--accent-neon); border: 1px solid var(--accent-neon); padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; text-transform: uppercase; transition: all 0.3s ease; }
+        .neon-btn:hover { background: var(--accent-neon); color: var(--bg-dark); box-shadow: 0 0 15px var(--accent-neon); }
+        
+        .input-group { display: flex; gap: 10px; align-items: center; }
+        
+        /* Task List */
+        #task-list { list-style: none; margin-top: 15px; }
+        .task-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: rgba(0, 0, 0, 0.3); border-radius: 8px; margin-bottom: 8px; border-left: 4px solid var(--glass-border); }
+        .task-item.completed { border-left-color: var(--accent-neon); opacity: 0.6; text-decoration: line-through; }
+        
+        /* Habits Section */
+        #habit-list { display: flex; flex-direction: column; gap: 15px; margin-top: 15px; }
+        .habit-card { background: rgba(0, 0, 0, 0.3); padding: 15px; border-radius: 8px; border-left: 4px solid var(--accent-neon); }
+        .habit-header { display: flex; justify-content: space-between; margin-bottom: 10px; font-weight: bold; align-items: center;}
+        .habit-time-badge { background: rgba(255, 215, 0, 0.2); color: var(--accent-neon); padding: 2px 8px; border-radius: 12px; font-size: 12px; }
+        .habit-days { display: flex; flex-wrap: wrap; gap: 6px; }
+        .day-box { width: 28px; height: 28px; border: 1px solid var(--glass-border); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; background: rgba(0,0,0,0.5); user-select: none; }
+        .day-box.done { background: var(--accent-neon); color: var(--bg-dark); box-shadow: 0 0 5px var(--accent-neon); border-color: var(--accent-neon); }
+
+        /* Stats & Heatmap */
+        .stats-container { display: flex; gap: 10px; margin-bottom: 20px; }
+        .stat-box { flex: 1; background: rgba(0,0,0,0.4); padding: 15px; border-radius: 8px; text-align: center; border: 1px solid var(--glass-border); }
+        .stat-box h3 { font-size: 12px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 5px; }
+        .stat-box p { font-size: 24px; color: var(--accent-neon); font-weight: bold; }
+
+        .heatmap { display: grid; grid-template-columns: repeat(auto-fill, minmax(15px, 1fr)); gap: 4px; margin-top: 15px; }
+        .heatmap-cell { width: 15px; height: 15px; background: rgba(255, 255, 255, 0.05); border-radius: 3px; }
+        .heatmap-cell.level-1 { background: rgba(255, 215, 0, 0.3); }
+        .heatmap-cell.level-2 { background: rgba(255, 215, 0, 0.6); }
+        .heatmap-cell.level-3 { background: var(--accent-neon); box-shadow: 0 0 5px var(--accent-neon); }
+        
+        /* Bottom Nav */
+        .glass-bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; display: flex; justify-content: space-around; padding: 15px 0; border-top: 1px solid var(--glass-border); border-radius: 20px 20px 0 0; z-index: 100; }
+        .nav-item { color: var(--text-muted); font-size: 0.9rem; cursor: pointer; padding: 5px 10px; }
+        .nav-item.active { color: var(--accent-neon); font-weight: bold; }
+        .custom-checkbox { width: 22px; height: 22px; cursor: pointer; accent-color: var(--accent-neon); }
+    </style>
+</head>
+<body>
+
+    <header class="glass-header">
+        <h1>Override.</h1>
+        <button id="request-notify" class="neon-btn" style="font-size: 10px; padding: 5px 10px; display: none;">Allow Alerts</button>
+    </header>
+
+    <main id="app-content">
+        <section id="journal-section" class="glass-card">
+            <h2>Rewrite the Script</h2>
+            <textarea id="trigger-input" placeholder="What is your villain telling you right now?"></textarea>
+            <textarea id="rehearsal-input" placeholder="Mentally rehearse your success..."></textarea>
+            <button id="save-journal" class="neon-btn" style="margin-top: 15px;">Log Entry</button>
+        </section>
+
+        <section id="tasks-section" class="glass-card" style="display: none;">
+            <h2>Daily Tasks</h2>
+            <div class="input-group">
+                <input type="text" id="task-input" placeholder="Add a new task...">
+                <button id="add-task" class="neon-btn">+</button>
+            </div>
+            <ul id="task-list"></ul>
+        </section>
+
+        <section id="habits-section" class="glass-card" style="display: none;">
+            <h2>21-Day Habits</h2>
+            <div class="input-group">
+                <input type="text" id="habit-input" placeholder="Habit name...">
+                <input type="time" id="habit-time" required>
+                <button id="add-habit" class="neon-btn">+</button>
+            </div>
+            <div id="habit-list"></div>
+        </section>
+
+        <section id="heatmap-section" class="glass-card" style="display: none;">
+            <h2>Stats Overview</h2>
+            <div class="stats-container">
+                <div class="stat-box">
+                    <h3>Tasks Done</h3>
+                    <p id="stat-tasks">0</p>
+                </div>
+                <div class="stat-box">
+                    <h3>Habit Marks</h3>
+                    <p id="stat-habits">0</p>
+                </div>
+            </div>
+            <h2>Proof Tracker</h2>
+            <div id="heatmap-grid" class="heatmap"></div>
+        </section>
+    </main>
+
+    <nav class="glass-bottom-nav">
+        <div class="nav-item active" data-target="journal-section">Journal</div>
+        <div class="nav-item" data-target="tasks-section">Tasks</div>
+        <div class="nav-item" data-target="habits-section">Habits</div>
+        <div class="nav-item" data-target="heatmap-section">Chart</div>
+    </nav>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // --- SAFELY CHECK NOTIFICATION SUPPORT ---
+            const notifyBtn = document.getElementById('request-notify');
+            const hasNotificationAPI = ('Notification' in window);
+            
+            if (hasNotificationAPI) {
+                if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+                    notifyBtn.style.display = 'block';
+                }
+                notifyBtn.addEventListener('click', () => {
+                    Notification.requestPermission().then(permission => {
+                        if (permission === 'granted') {
+                            notifyBtn.style.display = 'none';
+                            alert("System Notifications Enabled! App must remain open in background.");
+                        }
+                    });
+                });
+            } else {
+                console.log("System notifications are not supported on this browser.");
+            }
+
+            // --- AUDIO FIX ---
+            function playClickSound() {
+                try {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    if (!AudioContext) return; 
+                    const ctx = new AudioContext();
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.connect(gain); gain.connect(ctx.destination);
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(800, ctx.currentTime);
+                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
+                    osc.start(); osc.stop(ctx.currentTime + 0.05);
+                } catch(e) { console.log("Audio API issue ignored safely."); }
+            }
+
+            // --- DATA INITIALIZATION ---
+            let tasks = JSON.parse(localStorage.getItem('override_tasks')) || [];
+            let habits = JSON.parse(localStorage.getItem('override_habits')) || [];
+            let heatmapData = JSON.parse(localStorage.getItem('override_heatmap')) || {};
+            let notifiedToday = JSON.parse(localStorage.getItem('override_notified')) || {};
+
+            const taskList = document.getElementById('task-list');
+            const habitList = document.getElementById('habit-list');
+
+            // --- TASK SYSTEM ---
+            function renderTasks() {
+                taskList.innerHTML = '';
+                let totalTasksDone = 0;
+                tasks.forEach((task, index) => {
+                    if(task.completed) totalTasksDone++;
+                    const li = document.createElement('li');
+                    li.className = `task-item ${task.completed ? 'completed' : ''}`;
+                    li.innerHTML = `<span>${task.text}</span><input type="checkbox" class="custom-checkbox" data-index="${index}" ${task.completed ? 'checked' : ''}>`;
+                    taskList.appendChild(li);
+                });
+                document.getElementById('stat-tasks').innerText = totalTasksDone;
+            }
+
+            document.getElementById('add-task').addEventListener('click', () => {
+                const input = document.getElementById('task-input');
+                if (!input.value.trim()) return;
+                tasks.push({ text: input.value, completed: false, dateAdded: new Date().toISOString().split('T')[0] });
+                input.value = ''; playClickSound(); saveData();
+            });
+
+            taskList.addEventListener('change', (e) => {
+                if(e.target.classList.contains('custom-checkbox')) {
+                    tasks[e.target.getAttribute('data-index')].completed = e.target.checked;
+                    playClickSound(); saveData(); updateHeatmapData();
+                }
+            });
+
+            // --- HABIT SYSTEM ---
+            function renderHabits() {
+                habitList.innerHTML = '';
+                let totalHabitMarks = 0;
+                habits.forEach((habit, habitIndex) => {
+                    const card = document.createElement('div');
+                    card.className = 'habit-card';
+                    let boxesHTML = '';
+                    for(let i=0; i<21; i++) {
+                        const isDone = habit.days[i] ? true : false;
+                        if(isDone) totalHabitMarks++;
+                        boxesHTML += `<div class="day-box ${isDone ? 'done' : ''}" data-hindex="${habitIndex}" data-day="${i}">${isDone ? '✔' : (i+1)}</div>`;
+                    }
+                    card.innerHTML = `
+                        <div class="habit-header">
+                            <span>${habit.name}</span> 
+                            <span class="habit-time-badge">🕒 ${habit.time || 'No Time'}</span>
+                        </div>
+                        <div class="habit-days">${boxesHTML}</div>
+                    `;
+                    habitList.appendChild(card);
+                });
+                document.getElementById('stat-habits').innerText = totalHabitMarks;
+            }
+
+            document.getElementById('add-habit').addEventListener('click', () => {
+                const input = document.getElementById('habit-input');
+                const timeInput = document.getElementById('habit-time');
+                if (!input.value.trim() || !timeInput.value) {
+                    alert("Please enter both habit name and time!");
+                    return;
+                }
+                habits.push({ name: input.value, time: timeInput.value, days: new Array(21).fill(false) });
+                input.value = ''; timeInput.value = ''; playClickSound(); saveData();
+            });
+
+            habitList.addEventListener('click', (e) => {
+                if(e.target.classList.contains('day-box')) {
+                    const hIndex = e.target.getAttribute('data-hindex');
+                    const dayIndex = e.target.getAttribute('data-day');
+                    habits[hIndex].days[dayIndex] = !habits[hIndex].days[dayIndex];
+                    playClickSound(); saveData();
+                }
+            });
+
+            function saveData() {
+                localStorage.setItem('override_tasks', JSON.stringify(tasks));
+                localStorage.setItem('override_habits', JSON.stringify(habits));
+                renderTasks(); renderHabits();
+            }
+
+            // --- BACKGROUND TIMER & SAFELY TRIGGER NOTIFICATIONS ---
+            setInterval(() => {
+                const now = new Date();
+                const todayStr = now.toISOString().split('T')[0];
+                const currentTime = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
+
+                if(notifiedToday.date !== todayStr) {
+                    notifiedToday = { date: todayStr, habits: [] };
+                }
+
+                habits.forEach(habit => {
+                    if (habit.time === currentTime && !notifiedToday.habits.includes(habit.name)) {
+                        
+                        // Check if system notifications are allowed
+                        if (hasNotificationAPI && Notification.permission === 'granted') {
+                            new Notification("Habit Action Required!", {
+                                body: `Time to complete your habit: ${habit.name}`,
+                                icon: "https://cdn-icons-png.flaticon.com/512/3240/3240632.png",
+                                vibrate: [200, 100, 200]
+                            });
+                        } else {
+                            // Fallback popup if system notifications are broken/blocked
+                            alert(`⏰ Time to complete your habit: ${habit.name}`);
+                        }
+
+                        notifiedToday.habits.push(habit.name);
+                        localStorage.setItem('override_notified', JSON.stringify(notifiedToday));
+                    }
+                });
+            }, 30000); // Check every 30 seconds
+
+            // --- HEATMAP ---
+            function updateHeatmapData() {
+                const today = new Date().toISOString().split('T')[0];
+                const completedToday = tasks.filter(t => t.completed && t.dateAdded === today).length;
+                if(completedToday > 0 || heatmapData[today]) heatmapData[today] = completedToday;
+                localStorage.setItem('override_heatmap', JSON.stringify(heatmapData));
+                renderHeatmap();
+            }
+
+            function renderHeatmap() {
+                const heatmapGrid = document.getElementById('heatmap-grid');
+                heatmapGrid.innerHTML = '';
+                for (let i = 59; i >= 0; i--) {
+                    const d = new Date(); d.setDate(d.getDate() - i);
+                    const completions = heatmapData[d.toISOString().split('T')[0]] || 0;
+                    const cell = document.createElement('div');
+                    cell.className = 'heatmap-cell';
+                    if (completions === 1) cell.classList.add('level-1');
+                    if (completions === 2) cell.classList.add('level-2');
+                    if (completions >= 3) cell.classList.add('level-3');
+                    heatmapGrid.appendChild(cell);
+                }
+            }
+
+            // --- NAVIGATION ---
+            document.querySelectorAll('.nav-item').forEach(nav => {
+                nav.addEventListener('click', (e) => {
+                    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                    e.target.classList.add('active'); playClickSound();
+                    const targetId = e.target.getAttribute('data-target');
+                    document.querySelectorAll('main > section').forEach(sec => sec.style.display = 'none');
+                    document.getElementById(targetId).style.display = 'block';
+                });
+            });
+
+            // Handle the Journal Log Button
+            document.getElementById('save-journal').addEventListener('click', () => {
+                const trigger = document.getElementById('trigger-input').value;
+                const rehearsal = document.getElementById('rehearsal-input').value;
+                if(trigger || rehearsal) {
+                    alert("Journal entry saved successfully!");
+                    document.getElementById('trigger-input').value = '';
+                    document.getElementById('rehearsal-input').value = '';
+                }
+            });
+
+            renderTasks(); renderHabits(); renderHeatmap();
+        });
+    </script>
+</body>
+</html>
